@@ -2,7 +2,7 @@
 <html lang="en" ng-app="app">
 <head>
   <meta charset="UTF-8">
-  <title>AngularJS AuthenticationService Example</title>
+  <title>AngularJS End to End</title>
   <link rel="stylesheet" href="/css/normalize.css">
   <link rel="stylesheet" href="/css/foundation.min.css">
   <link rel="stylesheet" href="/css/style.css">

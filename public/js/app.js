@@ -1,31 +1,4 @@
-var app = angular.module("app", []);
-
-app.config(function($httpProvider) {
-
-  var logsOutUserOn401 = function($location, $q, SessionService, FlashService) {
-    var success = function(response) {
-      return response;
-    };
-
-    var error = function(response) {
-      if(response.status === 401) {
-        SessionService.unset('authenticated');
-        FlashService.show(response.data.flash);
-        $location.path('/login');
-        return $q.reject(response);
-      } else {
-        return $.reject(response);
-      }
-    };
-
-    return function(promise) {
-      return promise.then(success, error);
-    };
-  };
-
-  $httpProvider.responseInterceptors.push(logsOutUserOn401);
-
-});
+var app = angular.module("app", [])
 
 app.config(function($routeProvider) {
 
@@ -36,15 +9,10 @@ app.config(function($routeProvider) {
 
   $routeProvider.when('/home', {
     templateUrl: 'templates/home.html',
-    controller: 'HomeController'
-  });
-
-  $routeProvider.when('/books', {
-    templateUrl: 'templates/books.html',
-    controller: 'BooksController',
+    controller: 'HomeController',
     resolve: {
-      books : function(BookService) {
-        return BookService.get();
+      "expiry" : function($http) {
+        return $http.get('/expiry');
       }
     }
   });
@@ -53,23 +21,41 @@ app.config(function($routeProvider) {
 
 });
 
+app.config(function($httpProvider) {
+
+  var logsOutUserOn401 = function($location, $q, SessionService, FlashService) {
+    var success = function(response) {
+      return response;
+    };
+    var error   = function(response) {
+      if(reponse.status === 401) { // HTTP NotAuthorized
+        SessionService.unset('authenticated');
+        FlashService.show(response.data.flash);
+        $location.path('/login');
+        return $q.reject(response);
+      } else {
+        return $q.reject(response);
+      }
+    };
+
+    return function(promise) {
+      return promise.then(success, error);
+    };
+  };
+
+});
+
 app.run(function($rootScope, $location, AuthenticationService, FlashService) {
+
   var routesThatRequireAuth = ['/home'];
 
   $rootScope.$on('$routeChangeStart', function(event, next, current) {
     if(_(routesThatRequireAuth).contains($location.path()) && !AuthenticationService.isLoggedIn()) {
       $location.path('/login');
-      FlashService.show("Please log in to continue.");
+      FlashService.show("Please log in to contiue.");
     }
   });
-});
 
-app.factory("BookService", function($http) {
-  return {
-    get: function() {
-      return $http.get('/books');
-    }
-  };
 });
 
 app.factory("FlashService", function($rootScope) {
@@ -80,7 +66,7 @@ app.factory("FlashService", function($rootScope) {
     clear: function() {
       $rootScope.flash = "";
     }
-  }
+  };
 });
 
 app.factory("SessionService", function() {
@@ -94,12 +80,11 @@ app.factory("SessionService", function() {
     unset: function(key) {
       return sessionStorage.removeItem(key);
     }
-  }
+  };
 });
 
-app.factory("AuthenticationService", function($http, SessionService, FlashService) {
-
-  var cacheSession   = function() {
+app.factory("AuthenticationService", function($http, $location, SessionService, FlashService) {
+  var cacheSession = function() {
     SessionService.set('authenticated', true);
   };
 
@@ -131,22 +116,19 @@ app.factory("AuthenticationService", function($http, SessionService, FlashServic
 });
 
 app.controller("LoginController", function($scope, $location, AuthenticationService) {
-  $scope.credentials = { email: "", password: "" };
+  $scope.credentials = { username: "", password: "" };
 
   $scope.login = function() {
     AuthenticationService.login($scope.credentials).success(function() {
       $location.path('/home');
     });
-  };
+  }
 });
 
-app.controller("BooksController", function($scope, books) {
-  $scope.books = books.data;
-});
-
-app.controller("HomeController", function($scope, $location, AuthenticationService) {
+app.controller("HomeController", function($scope, $location, AuthenticationService, expiry) {
   $scope.title = "Awesome Home";
   $scope.message = "Mouse Over these images to see a directive at work!";
+  $scope.expiry = expiry.data;
 
   $scope.logout = function() {
     AuthenticationService.logout().success(function() {

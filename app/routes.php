@@ -12,20 +12,12 @@
 */
 
 Route::get('/', function() {
-	return View::make('singlepage');
-});
-
-Route::get('/books', function() {
-  return Response::json(array(
-    array('title' => 'Great Expectations', 'author' => 'Dickens'),
-    array('title' => 'Foundation', 'author' => 'Asimov'),
-    array('title' => 'Treasure Island', 'author' => 'Stephenson')
-  ));
-
-  // return Response::json(array('flash' => 'Session expired'), 401);
+  return View::make('singlepage');
 });
 
 Route::post('/auth/login', 'AuthController@login');
-Route::get('/auth/logout', 'AuthController@logout');
-Route::get('/auth/status', 'AuthController@status');
-Route::get('/auth/secrets','AuthController@secrets');
+Route::get('/auth/logout','AuthController@logout');
+Route::get('/expiry', function() {
+  return Response::json(array('flash' => 'all is good'));
+  // return Response::json(array('flash' => 'Your session has expired, please log in.'), 401);
+});
